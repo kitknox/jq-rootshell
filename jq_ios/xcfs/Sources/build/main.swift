@@ -9,10 +9,10 @@ OutputLevel.default = .error
 let scheme = "jq_ios"
 let project = "jq_ios.xcodeproj"
 
-// Standard platforms via FMake
-let platforms: [Platform] = [.iPhoneOS, .iPhoneSimulator, .Catalyst]
+// Standard platforms via FMake (excluding Catalyst - handled separately)
+let platforms: [Platform] = [.iPhoneOS, .iPhoneSimulator]
 
-// Additional visionOS platforms
+// Additional platforms requiring manual archive
 let additionalPlatforms = ["xros", "xrsimulator"]
 
 // Clean any previous builds
@@ -45,6 +45,18 @@ for platform in additionalPlatforms {
         """)
 }
 
+// Archive for Mac Catalyst (must use destination, not sdk, to get proper Catalyst framework)
+print("Archiving \(scheme) for Mac Catalyst...")
+try sh("""
+    xcodebuild archive \
+        -project \(project) \
+        -scheme \(scheme) \
+        -destination 'generic/platform=macOS,variant=Mac Catalyst' \
+        -archivePath .build/\(scheme)-maccatalyst.xcarchive \
+        BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
+        SKIP_INSTALL=NO
+    """)
+
 // Create xcframework
 print("Creating xcframework...")
 try cd(".build") {
@@ -71,6 +83,15 @@ try cd(".build") {
         if FileManager.default.fileExists(atPath: dsym) {
             frameworkArgs.append("-debug-symbols \(dsym)")
         }
+    }
+
+    // Add Mac Catalyst archive
+    let catalystArchive = "\(currentDir)/\(scheme)-maccatalyst.xcarchive"
+    let catalystFramework = "\(catalystArchive)/Products/Library/Frameworks/\(scheme).framework"
+    let catalystDsym = "\(catalystArchive)/dSYMs/\(scheme).framework.dSYM"
+    frameworkArgs.append("-framework \(catalystFramework)")
+    if FileManager.default.fileExists(atPath: catalystDsym) {
+        frameworkArgs.append("-debug-symbols \(catalystDsym)")
     }
 
     try? sh("rm -rf \(scheme).xcframework")
