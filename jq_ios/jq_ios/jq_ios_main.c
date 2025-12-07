@@ -526,10 +526,18 @@ int jq_main(int argc, char* argv[]) {
     }
 
     /* Set up output options */
-    /* Note: On iOS we generally don't have isatty() working correctly,
-       so we rely on explicit -C flag or ios_system detection */
+    /* Auto-enable colors if stdout is a TTY */
+    if (ios_isatty(fileno(jq_ios_stdout()))) {
+        dumpopts |= JV_PRINT_ISATTY | JV_PRINT_COLOR;
+        /* Respect NO_COLOR environment variable */
+        const char *no_color = getenv("NO_COLOR");
+        if (no_color != NULL && no_color[0] != '\0') {
+            dumpopts &= ~JV_PRINT_COLOR;
+        }
+    }
     if (options & SORTED_OUTPUT) dumpopts |= JV_PRINT_SORTED;
     if (options & ASCII_OUTPUT) dumpopts |= JV_PRINT_ASCII;
+    /* Explicit -C and -M flags override auto-detection */
     if (options & COLOR_OUTPUT) dumpopts |= JV_PRINT_COLOR;
     if (options & NO_COLOR_OUTPUT) dumpopts &= ~JV_PRINT_COLOR;
 
