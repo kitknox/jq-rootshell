@@ -641,6 +641,10 @@
 				OTHER_CFLAGS = (
 					"-D_REENTRANT",
 				);
+				OTHER_LDFLAGS = (
+					"-undefined",
+					"dynamic_lookup",
+				);
 			};
 			name = Debug;
 		};
@@ -696,6 +700,10 @@
 				);
 				OTHER_CFLAGS = (
 					"-D_REENTRANT",
+				);
+				OTHER_LDFLAGS = (
+					"-undefined",
+					"dynamic_lookup",
 				);
 			};
 			name = Release;

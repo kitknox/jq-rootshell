@@ -246,31 +246,26 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
 }
 
 /*
- * ios_system thread-local stream detection
+ * ios_system thread-local stream integration
  *
  * ios_system provides thread-local FILE* variables for per-session I/O.
- * We need to bridge ios_system's TLS to jq_ios's TLS at startup.
- *
- * Since weak linkage doesn't work with __thread TLS variables, we use
- * dlsym() at runtime to find the ios_system TLS variables.
+ * These must be declared as extern __thread and used directly - dlsym
+ * does not work for TLS variables.
  */
 #ifdef __APPLE__
-#include <dlfcn.h>
+extern __thread FILE* thread_stdin;
+extern __thread FILE* thread_stdout;
+extern __thread FILE* thread_stderr;
 
 static void jq_ios_bridge_ios_system_streams(void) {
-    /* Look up ios_system's TLS variables at runtime */
-    FILE** thread_stdout_ptr = (FILE**)dlsym(RTLD_DEFAULT, "thread_stdout");
-    FILE** thread_stderr_ptr = (FILE**)dlsym(RTLD_DEFAULT, "thread_stderr");
-    FILE** thread_stdin_ptr = (FILE**)dlsym(RTLD_DEFAULT, "thread_stdin");
-
-    if (thread_stdout_ptr && *thread_stdout_ptr) {
-        jq_ios_set_stdout(*thread_stdout_ptr);
+    if (thread_stdout) {
+        jq_ios_set_stdout(thread_stdout);
     }
-    if (thread_stderr_ptr && *thread_stderr_ptr) {
-        jq_ios_set_stderr(*thread_stderr_ptr);
+    if (thread_stderr) {
+        jq_ios_set_stderr(thread_stderr);
     }
-    if (thread_stdin_ptr && *thread_stdin_ptr) {
-        jq_ios_set_stdin(*thread_stdin_ptr);
+    if (thread_stdin) {
+        jq_ios_set_stdin(thread_stdin);
     }
 }
 #else
