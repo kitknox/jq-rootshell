@@ -19,6 +19,10 @@
 #include "util.h"
 #include "linker.h"
 
+#ifdef JQ_IOS_BUILD
+#include "jq_tls.h"
+#endif
+
 struct jq_state {
   void (*nomem_handler)(void *);
   void *nomem_handler_data;
@@ -1040,7 +1044,13 @@ jv jq_format_error(jv msg) {
 // message.
 static void default_err_cb(void *data, jv msg) {
   msg = jq_format_error(msg);
+#ifdef JQ_IOS_BUILD
+  /* For iOS builds, use thread-local stderr if no explicit stream provided */
+  FILE *err = data ? (FILE *)data : jq_ios_stderr();
+  fprintf(err, "%s\n", jv_string_value(msg));
+#else
   fprintf((FILE *)data, "%s\n", jv_string_value(msg));
+#endif
   jv_free(msg);
 }
 
@@ -1073,7 +1083,11 @@ jq_state *jq_init(void) {
   jq->stderr_cb_data = NULL;
 
   jq->err_cb = default_err_cb;
+#ifdef JQ_IOS_BUILD
+  jq->err_cb_data = NULL;  /* Will use jq_ios_stderr() */
+#else
   jq->err_cb_data = stderr;
+#endif
 
   jq->attrs = jv_object();
   jq->path = jv_null();

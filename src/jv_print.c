@@ -30,11 +30,26 @@
 #define DEFAULT_COLORS \
   {COL("0;90"),    COL("0;39"),      COL("0;39"),     COL("0;39"),\
    COL("0;32"),    COL("1;39"),      COL("1;39"),     COL("1;34")};
+
+#ifdef JQ_IOS_BUILD
+/* Thread-local colors for iOS - see jq_tls.h */
+#include "jq_tls.h"
+#define colors (jq_ios_get_colors()->colors)
+#define COLORS_LEN JQ_IOS_COLORS_LEN
+#define FIELD_COLOR (jq_ios_get_field_color())
+#else
 static const char *const default_colors[] = DEFAULT_COLORS;
 static const char *colors[] = DEFAULT_COLORS;
 #define COLORS_LEN (sizeof(colors) / sizeof(colors[0]))
 #define FIELD_COLOR (colors[7])
+#endif
 
+#ifdef JQ_IOS_BUILD
+/* jq_set_colors is replaced by jq_ios_set_colors in jq_tls.c for iOS builds */
+int jq_set_colors(const char *code_str) {
+  return jq_ios_set_colors(code_str);
+}
+#else
 static char *colors_buf = NULL;
 int jq_set_colors(const char *code_str) {
   if (code_str == NULL)
@@ -93,6 +108,7 @@ int jq_set_colors(const char *code_str) {
     colors[ci] = default_colors[ci];
   return 1;
 }
+#endif
 
 static void put_buf(const char *s, int len, FILE *fout, jv *strout, int is_tty) {
   if (strout) {
@@ -390,15 +406,24 @@ void jv_dumpf(jv x, FILE *f, int flags) {
 }
 
 void jv_dump(jv x, int flags) {
+#ifdef JQ_IOS_BUILD
+  jv_dumpf(x, jq_ios_stdout(), flags);
+#else
   jv_dumpf(x, stdout, flags);
+#endif
 }
 
 /* This one is nice for use in debuggers */
 void jv_show(jv x, int flags) {
   if (flags == -1)
     flags = JV_PRINT_PRETTY | JV_PRINT_COLOR | JV_PRINT_INDENT_FLAGS(2);
+#ifdef JQ_IOS_BUILD
+  jv_dumpf(jv_copy(x), jq_ios_stderr(), flags | JV_PRINT_INVALID);
+  fflush(jq_ios_stderr());
+#else
   jv_dumpf(jv_copy(x), stderr, flags | JV_PRINT_INVALID);
   fflush(stderr);
+#endif
 }
 
 jv jv_dump_string(jv x, int flags) {
