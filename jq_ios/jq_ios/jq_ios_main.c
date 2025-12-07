@@ -249,23 +249,28 @@ static int process(jq_state *jq, jv value, int flags, int dumpopts, int options)
  * ios_system thread-local stream integration
  *
  * ios_system provides thread-local FILE* variables for per-session I/O.
- * These must be declared as extern __thread and used directly - dlsym
- * does not work for TLS variables.
+ * TLS variables don't resolve correctly across dynamic library boundaries
+ * with -undefined dynamic_lookup, so we use accessor functions instead.
  */
 #ifdef __APPLE__
-extern __thread FILE* thread_stdin;
-extern __thread FILE* thread_stdout;
-extern __thread FILE* thread_stderr;
+extern FILE* ios_stdin(void);
+extern FILE* ios_stdout(void);
+extern FILE* ios_stderr(void);
+extern int ios_isatty(int fd);
 
 static void jq_ios_bridge_ios_system_streams(void) {
-    if (thread_stdout) {
-        jq_ios_set_stdout(thread_stdout);
+    FILE* in = ios_stdin();
+    FILE* out = ios_stdout();
+    FILE* err = ios_stderr();
+
+    if (out) {
+        jq_ios_set_stdout(out);
     }
-    if (thread_stderr) {
-        jq_ios_set_stderr(thread_stderr);
+    if (err) {
+        jq_ios_set_stderr(err);
     }
-    if (thread_stdin) {
-        jq_ios_set_stdin(thread_stdin);
+    if (in) {
+        jq_ios_set_stdin(in);
     }
 }
 #else
@@ -544,14 +549,17 @@ int jq_main(int argc, char* argv[]) {
         }
     }
 
-    /* Default to identity filter if no program given and not reading from stdin */
+    /* Default to identity filter if no program given and stdin/stdout is not a TTY
+     * (i.e., we're in a pipeline). If both are TTYs, show usage instead. */
     if (!program && !(options & FROM_FILE)) {
-        program = ".";
+        if (!ios_isatty(fileno(jq_ios_stdout())) || !ios_isatty(fileno(jq_ios_stdin()))) {
+            program = ".";
+        }
     }
 
     if (!program) {
         usage(2, 1);
-        ret = JQ_ERROR_COMPILE;
+        ret = JQ_OK;  /* Not an error - user just ran jq with no args */
         goto out;
     }
 
