@@ -58,3 +58,17 @@ cscope.in.out
 cscope.out
 cscope.po.out
 jq.dSYM
+
+# macOS
+.DS_Store
+
+# Xcode / SwiftPM build output (jq_ios)
+.build/
+DerivedData/
+*.xcarchive
+*.xcframework
+*.xcframework.zip
+*.dSYM
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
