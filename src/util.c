@@ -66,7 +66,9 @@ void *alloca (size_t);
 #include "jq.h"
 #include "jv_alloc.h"
 #include "jv_unicode.h"
+#ifdef JQ_IOS_BUILD
 #include "jq_tls.h"
+#endif
 
 #ifdef WIN32
 FILE *fopen(const char *fname, const char *mode) {
@@ -267,9 +269,13 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
       fprintf(stderr,"jq: error: %s\n", strerror(errno));
     }
     if (state->current_input) {
-      FILE *tls_stdin = jq_ios_stdin();
-      if (state->current_input == tls_stdin) {
-        clearerr(tls_stdin); // perhaps we can read again; anyways, we don't fclose(stdin)
+#ifdef JQ_IOS_BUILD
+      FILE *input_stdin = jq_ios_stdin();
+#else
+      FILE *input_stdin = stdin;
+#endif
+      if (state->current_input == input_stdin) {
+        clearerr(input_stdin); // perhaps we can read again; anyways, we don't fclose(stdin)
       } else {
         fclose(state->current_input);
       }
@@ -280,7 +286,11 @@ static int jq_util_input_read_more(jq_util_input_state *state) {
       jv_free(state->current_filename);
       state->current_line = 0;
       if (!strcmp(f, "-")) {
+#ifdef JQ_IOS_BUILD
         state->current_input = jq_ios_stdin();
+#else
+        state->current_input = stdin;
+#endif
         state->current_filename = jv_string("<stdin>");
       } else {
         state->current_input = fopen(f, "r");

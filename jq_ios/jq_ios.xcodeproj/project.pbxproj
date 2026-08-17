@@ -609,7 +609,7 @@
 					"@loader_path/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				MARKETING_VERSION = 1.7.1;
+				MARKETING_VERSION = 0.1.0;
 				MODULEMAP_FILE = jq_ios/module.modulemap;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
@@ -632,11 +632,11 @@
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
+					"$(PROJECT_DIR)/jq_ios",
 					"$(PROJECT_DIR)/..",
 					"$(PROJECT_DIR)/../src",
 					"$(PROJECT_DIR)/../vendor/oniguruma/src",
 					"$(PROJECT_DIR)/../vendor",
-					"$(PROJECT_DIR)/jq_ios",
 				);
 				OTHER_CFLAGS = (
 					"-D_REENTRANT",
@@ -670,7 +670,7 @@
 					"@loader_path/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
-				MARKETING_VERSION = 1.7.1;
+				MARKETING_VERSION = 0.1.0;
 				MODULEMAP_FILE = jq_ios/module.modulemap;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
@@ -692,11 +692,11 @@
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
+					"$(PROJECT_DIR)/jq_ios",
 					"$(PROJECT_DIR)/..",
 					"$(PROJECT_DIR)/../src",
 					"$(PROJECT_DIR)/../vendor/oniguruma/src",
 					"$(PROJECT_DIR)/../vendor",
-					"$(PROJECT_DIR)/jq_ios",
 				);
 				OTHER_CFLAGS = (
 					"-D_REENTRANT",

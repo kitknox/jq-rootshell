@@ -40,7 +40,7 @@ jq-*.zip
 configure
 aclocal.m4
 Makefile.in
-version.h
+/src/version.h
 .remake-version-h
 config.cache
 *.rpm
